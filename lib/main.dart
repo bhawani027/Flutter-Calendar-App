@@ -1,22 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mycalendar_app/map/location.dart';
 
-import 'Calendar/calendar.dart';
+import 'app/app.dart';
+import 'core/di/injector.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home : Addlocation(),
-
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await configureDependencies();
+  runApp(const CalendarApp());
 }
