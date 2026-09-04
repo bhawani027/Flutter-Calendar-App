@@ -5,6 +5,7 @@ import '../../../../core/usecase/usecase.dart';
 import '../entities/calendar_event.dart';
 import '../repositories/event_repository.dart';
 
+/// Validates an edited event and persists it over the stored one.
 class UpdateEvent implements UseCase<CalendarEvent, CalendarEvent> {
   const UpdateEvent(this._repository);
 
@@ -12,14 +13,9 @@ class UpdateEvent implements UseCase<CalendarEvent, CalendarEvent> {
 
   @override
   Future<Either<Failure, CalendarEvent>> call(CalendarEvent params) async {
-    if (params.title.trim().isEmpty) {
-      return const Left(ValidationFailure('Give the event a title.'));
-    }
-    if (!params.end.isAfter(params.start)) {
-      return const Left(
-        ValidationFailure('The event must end after it starts.'),
-      );
-    }
-    return _repository.updateEvent(params);
+    final failure = params.validate();
+    if (failure != null) return Left(failure);
+
+    return _repository.updateEvent(params.normalized());
   }
 }

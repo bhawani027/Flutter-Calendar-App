@@ -5,9 +5,6 @@ extension DateTimeX on DateTime {
   /// The last microsecond of the same calendar day.
   DateTime get endOfDay => DateTime(year, month, day, 23, 59, 59, 999, 999);
 
-  bool isSameDay(DateTime other) =>
-      year == other.year && month == other.month && day == other.day;
-
   /// Replaces the time-of-day while keeping the calendar date.
   DateTime withTime(int hour, int minute) =>
       DateTime(year, month, day, hour, minute);

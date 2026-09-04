@@ -1,16 +1,17 @@
 import '../../domain/entities/attendee.dart';
 
-/// Serialisable form of [Attendee].
-class AttendeeModel extends Attendee {
-  const AttendeeModel({required super.name, required super.email});
-
-  factory AttendeeModel.fromEntity(Attendee attendee) =>
-      AttendeeModel(name: attendee.name, email: attendee.email);
-
-  factory AttendeeModel.fromJson(Map<String, dynamic> json) => AttendeeModel(
+/// JSON mapping for [Attendee].
+///
+/// A pure mapper rather than a subclass — a subclass would not compare equal
+/// to the entity it mirrors, since Equatable includes the runtime type.
+abstract final class AttendeeModel {
+  static Attendee fromJson(Map<String, dynamic> json) => Attendee(
         name: json['name'] as String? ?? '',
         email: json['email'] as String? ?? '',
       );
 
-  Map<String, dynamic> toJson() => {'name': name, 'email': email};
+  static Map<String, dynamic> toJson(Attendee attendee) => {
+        'name': attendee.name,
+        'email': attendee.email,
+      };
 }

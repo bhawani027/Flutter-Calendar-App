@@ -43,6 +43,7 @@ lib/
 │   ├── di/injector.dart          # get_it registrations
 │   ├── error/                    # exceptions (data) + failures (domain)
 │   ├── usecase/usecase.dart      # UseCase / StreamUseCase contracts
+│   ├── presentation/             # LoadStatus, shared error snack bar
 │   ├── extensions/
 │   └── utils/id_generator.dart
 └── features/
@@ -62,6 +63,16 @@ lib/
     ├── timezone/                 # IANA time zone picker (same three layers)
     └── location/                 # device location picker (same three layers)
 ```
+
+### Where the rules live
+
+`CalendarEvent.validate()` and `CalendarEvent.normalized()` hold what makes an
+event valid and what `isAllDay` means (midnight to 23:59:59.999999). Both save
+use cases call them, so the rules hold for every caller rather than only for
+events built by the editor screen.
+
+The editor edits a `CalendarEvent` with `copyWith` instead of mirroring its
+fields in form state, so a field the form does not render survives a save.
 
 ### Error handling
 
@@ -89,7 +100,7 @@ flutter test
 flutter analyze
 ```
 
-38 tests cover the entities, the JSON mapping, the use cases (including their
-validation rules), the repository's exception-to-failure translation, and both
+49 tests cover the entities (validation and normalisation), the JSON mapping,
+the use cases, the repository's exception-to-failure translation, and both
 cubits. The domain and data layers need no Flutter bindings; every dependency is
 faked through its interface with `mocktail`.

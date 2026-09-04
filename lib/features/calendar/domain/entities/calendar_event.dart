@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/error/failures.dart';
+import '../../../../core/extensions/date_time_extensions.dart';
 import 'attendee.dart';
 import 'recurrence_rule.dart';
 
@@ -7,6 +9,10 @@ import 'recurrence_rule.dart';
 ///
 /// Pure Dart on purpose: no Flutter, no Syncfusion, no Hive. The colour is an
 /// ARGB `int` rather than a `Color` so the domain stays framework-free.
+///
+/// The rules about what makes an event valid, and what `isAllDay` actually
+/// means, live here in [validate] and [normalized] — not in whichever screen
+/// happens to build one.
 class CalendarEvent extends Equatable {
   const CalendarEvent({
     required this.id,
@@ -20,11 +26,21 @@ class CalendarEvent extends Equatable {
     this.location,
     this.notes,
     this.timeZoneId,
-    this.reminderBefore,
   });
 
-  /// Material blue — the colour the app used before events were configurable.
-  static const int defaultColorValue = 0xFF2196F3;
+  /// A blank event starting at the next full hour after [anchor].
+  factory CalendarEvent.draft(DateTime anchor) {
+    final start = anchor.withTime(anchor.hour, 0).add(const Duration(hours: 1));
+    return CalendarEvent(
+      id: '',
+      title: '',
+      start: start,
+      end: start.add(const Duration(hours: 1)),
+    );
+  }
+
+  /// The palette's blue — see `AppColors.eventPalette`.
+  static const int defaultColorValue = 0xFF3D4FB5;
 
   final String id;
   final String title;
@@ -37,20 +53,40 @@ class CalendarEvent extends Equatable {
   final String? location;
   final String? notes;
   final String? timeZoneId;
-  final Duration? reminderBefore;
 
   Duration get duration => end.difference(start);
-
-  /// True when this event covers any part of [day].
-  bool occursOn(DateTime day) {
-    final dayStart = DateTime(day.year, day.month, day.day);
-    final dayEnd = dayStart.add(const Duration(days: 1));
-    return start.isBefore(dayEnd) && end.isAfter(dayStart);
-  }
 
   /// True when this event overlaps the half-open range `[from, to)`.
   bool overlaps(DateTime from, DateTime to) =>
       start.isBefore(to) && end.isAfter(from);
+
+  /// True when this event covers any part of [day].
+  bool occursOn(DateTime day) =>
+      overlaps(day.startOfDay, day.startOfDay.add(const Duration(days: 1)));
+
+  /// The reason this event may not be saved, or null when it is fine.
+  ValidationFailure? validate() {
+    if (title.trim().isEmpty) {
+      return const ValidationFailure('Give the event a title.');
+    }
+    if (!end.isAfter(start)) {
+      return const ValidationFailure('The event must end after it starts.');
+    }
+    return null;
+  }
+
+  /// The form this event takes once stored: the title is trimmed, and an
+  /// all-day event is widened to cover its whole day.
+  ///
+  /// Applied by the save use cases, so it holds no matter which caller built
+  /// the event.
+  CalendarEvent normalized() {
+    return copyWith(
+      title: title.trim(),
+      start: isAllDay ? start.startOfDay : start,
+      end: isAllDay ? end.endOfDay : end,
+    );
+  }
 
   CalendarEvent copyWith({
     String? id,
@@ -64,7 +100,6 @@ class CalendarEvent extends Equatable {
     String? location,
     String? notes,
     String? timeZoneId,
-    Duration? reminderBefore,
   }) {
     return CalendarEvent(
       id: id ?? this.id,
@@ -78,7 +113,6 @@ class CalendarEvent extends Equatable {
       location: location ?? this.location,
       notes: notes ?? this.notes,
       timeZoneId: timeZoneId ?? this.timeZoneId,
-      reminderBefore: reminderBefore ?? this.reminderBefore,
     );
   }
 
@@ -95,6 +129,5 @@ class CalendarEvent extends Equatable {
         location,
         notes,
         timeZoneId,
-        reminderBefore,
       ];
 }

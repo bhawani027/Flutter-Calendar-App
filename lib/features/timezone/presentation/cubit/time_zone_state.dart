@@ -1,31 +1,30 @@
 part of 'time_zone_cubit.dart';
 
-enum TimeZoneStatus { initial, loading, ready, failure }
-
 class TimeZoneState extends Equatable {
   const TimeZoneState({
-    this.status = TimeZoneStatus.initial,
+    this.status = LoadStatus.initial,
     this.zones = const [],
     this.query = '',
     this.errorMessage,
   });
 
-  final TimeZoneStatus status;
+  final LoadStatus status;
   final List<TimeZoneOption> zones;
   final String query;
   final String? errorMessage;
 
   TimeZoneState copyWith({
-    TimeZoneStatus? status,
+    LoadStatus? status,
     List<TimeZoneOption>? zones,
     String? query,
     String? errorMessage,
+    bool clearError = false,
   }) {
     return TimeZoneState(
       status: status ?? this.status,
       zones: zones ?? this.zones,
       query: query ?? this.query,
-      errorMessage: errorMessage,
+      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
 

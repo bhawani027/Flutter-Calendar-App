@@ -1,3 +1,4 @@
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../../core/error/exceptions.dart';
@@ -9,13 +10,22 @@ abstract interface class TimeZoneDataSource {
 
 /// Reads the zone list out of the bundled IANA database.
 ///
-/// Assumes `tz.initializeTimeZones()` has already run — see `main.dart`.
+/// The database is initialised on first use rather than at app startup — it is
+/// ~600 zones that only the time zone picker ever needs, so loading it during
+/// `main` delayed the first frame for a screen most sessions never open.
 class TzDatabaseDataSource implements TimeZoneDataSource {
-  const TzDatabaseDataSource();
+  TzDatabaseDataSource();
+
+  static bool _initialised = false;
 
   @override
   List<TimeZoneOption> loadAll() {
     try {
+      if (!_initialised) {
+        tz_data.initializeTimeZones();
+        _initialised = true;
+      }
+
       final now = DateTime.now();
       return tz.timeZoneDatabase.locations.keys.map((id) {
         final location = tz.getLocation(id);

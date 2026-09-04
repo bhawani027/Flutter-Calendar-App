@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mycalendar_app/core/error/failures.dart';
 import 'package:mycalendar_app/features/calendar/domain/entities/calendar_event.dart';
 
 import '../../../../helpers/fixtures.dart';
@@ -54,7 +55,56 @@ void main() {
     });
   });
 
-  test('the default colour is Material blue', () {
-    expect(CalendarEvent.defaultColorValue, 0xFF2196F3);
+  group('draft', () {
+    test('starts at the next full hour and lasts an hour', () {
+      final draft = CalendarEvent.draft(DateTime(2026, 9, 3, 14, 37));
+
+      expect(draft.start, DateTime(2026, 9, 3, 15));
+      expect(draft.end, DateTime(2026, 9, 3, 16));
+      expect(draft.id, isEmpty);
+    });
+  });
+
+  group('validate', () {
+    test('accepts a well-formed event', () {
+      expect(buildEvent().validate(), isNull);
+    });
+
+    test('rejects a blank or whitespace-only title', () {
+      expect(buildEvent(title: '').validate(), isA<ValidationFailure>());
+      expect(buildEvent(title: '   ').validate(), isA<ValidationFailure>());
+    });
+
+    test('rejects an end that is not after the start', () {
+      final start = DateTime(2026, 9, 3, 9);
+      expect(buildEvent(start: start, end: start).validate(),
+          isA<ValidationFailure>());
+    });
+  });
+
+  group('normalized', () {
+    test('trims the title', () {
+      expect(buildEvent(title: '  Standup  ').normalized().title, 'Standup');
+    });
+
+    test('widens an all-day event across the whole day', () {
+      final normalized = buildEvent(isAllDay: true).normalized();
+
+      expect(normalized.start, DateTime(2026, 9, 3));
+      expect(normalized.end.hour, 23);
+      expect(normalized.end.minute, 59);
+    });
+
+    test('leaves a timed event alone', () {
+      final event = buildEvent();
+      expect(event.normalized().start, event.start);
+      expect(event.normalized().end, event.end);
+    });
+  });
+
+  test('the default colour is in the picker palette', () {
+    // Guards the old bug where the default was a blue the palette did not
+    // contain, so a new event showed nothing selected in the colour picker.
+    expect(CalendarEvent.defaultColorValue, 0xFF3D4FB5);
   });
 }

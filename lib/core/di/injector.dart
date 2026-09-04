@@ -1,6 +1,5 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:uuid/uuid.dart';
 
 import '../../features/calendar/data/datasources/event_local_data_source.dart';
@@ -8,7 +7,6 @@ import '../../features/calendar/data/repositories/event_repository_impl.dart';
 import '../../features/calendar/domain/repositories/event_repository.dart';
 import '../../features/calendar/domain/usecases/create_event.dart';
 import '../../features/calendar/domain/usecases/delete_event.dart';
-import '../../features/calendar/domain/usecases/get_events_in_range.dart';
 import '../../features/calendar/domain/usecases/update_event.dart';
 import '../../features/calendar/domain/usecases/watch_events.dart';
 import '../../features/calendar/presentation/cubit/calendar_cubit.dart';
@@ -33,7 +31,6 @@ final GetIt sl = GetIt.instance;
 /// Opens local storage and registers every dependency. Call once from `main`.
 Future<void> configureDependencies() async {
   await Hive.initFlutter();
-  tz_data.initializeTimeZones();
 
   final eventBox = await Hive.openBox<String>(
     HiveEventLocalDataSource.boxName,
@@ -42,8 +39,9 @@ Future<void> configureDependencies() async {
   // ---- External -----------------------------------------------------------
   sl
     ..registerLazySingleton<Box<String>>(() => eventBox)
-    ..registerLazySingleton<Uuid>(() => const Uuid())
-    ..registerLazySingleton<IdGenerator>(() => UuidIdGenerator(sl()));
+    ..registerLazySingleton<IdGenerator>(
+      () => const UuidIdGenerator(Uuid()),
+    );
 
   // ---- Data sources -------------------------------------------------------
   sl
@@ -51,7 +49,7 @@ Future<void> configureDependencies() async {
       () => HiveEventLocalDataSource(sl()),
     )
     ..registerLazySingleton<TimeZoneDataSource>(
-      () => const TzDatabaseDataSource(),
+      TzDatabaseDataSource.new,
     )
     ..registerLazySingleton<DeviceLocationDataSource>(
       () => const GeolocatorLocationDataSource(),
@@ -70,7 +68,6 @@ Future<void> configureDependencies() async {
   // ---- Use cases ----------------------------------------------------------
   sl
     ..registerLazySingleton(() => WatchEvents(sl()))
-    ..registerLazySingleton(() => GetEventsInRange(sl()))
     ..registerLazySingleton(() => CreateEvent(sl(), sl()))
     ..registerLazySingleton(() => UpdateEvent(sl()))
     ..registerLazySingleton(() => DeleteEvent(sl()))

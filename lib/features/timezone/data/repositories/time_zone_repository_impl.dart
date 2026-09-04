@@ -11,20 +11,13 @@ class TimeZoneRepositoryImpl implements TimeZoneRepository {
 
   final TimeZoneDataSource _dataSource;
 
-  /// The zone list is static for a run, so it is read once and reused.
+  /// The zone list is static for a run, so it is built once and reused.
   List<TimeZoneOption>? _cache;
 
   @override
-  Future<Either<Failure, List<TimeZoneOption>>> search(String query) async {
+  Future<Either<Failure, List<TimeZoneOption>>> getAll() async {
     try {
-      final all = _cache ??= _dataSource.loadAll();
-      final needle = query.trim().toLowerCase();
-      if (needle.isEmpty) return Right(all);
-      return Right(
-        all
-            .where((zone) => zone.id.toLowerCase().contains(needle))
-            .toList(growable: false),
-      );
+      return Right(_cache ??= _dataSource.loadAll());
     } on TimeZoneException catch (error) {
       return Left(TimeZoneFailure(error.message));
     }

@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/presentation/load_status.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../domain/usecases/delete_event.dart';
@@ -30,19 +31,19 @@ class CalendarCubit extends Cubit<CalendarState> {
   /// Starts listening for events. Safe to call once, from the page's `initState`.
   Future<void> start() async {
     if (_subscription != null) return;
-    emit(state.copyWith(status: CalendarStatus.loading, clearError: true));
+    emit(state.copyWith(status: LoadStatus.loading, clearError: true));
 
     _subscription = _watchEvents(const NoParams()).listen((result) {
       result.match(
         (failure) => emit(
           state.copyWith(
-            status: CalendarStatus.failure,
+            status: LoadStatus.failure,
             errorMessage: failure.message,
           ),
         ),
         (events) => emit(
           state.copyWith(
-            status: CalendarStatus.ready,
+            status: LoadStatus.ready,
             events: events,
             clearError: true,
           ),
@@ -61,7 +62,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     result.match(
       (failure) => emit(
         state.copyWith(
-          status: CalendarStatus.failure,
+          status: LoadStatus.failure,
           errorMessage: failure.message,
         ),
       ),

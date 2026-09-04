@@ -3,23 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mycalendar_app/core/error/failures.dart';
-import 'package:mycalendar_app/core/usecase/usecase.dart';
+import 'package:mycalendar_app/core/presentation/load_status.dart';
 import 'package:mycalendar_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:mycalendar_app/features/calendar/domain/usecases/delete_event.dart';
-import 'package:mycalendar_app/features/calendar/domain/usecases/watch_events.dart';
 import 'package:mycalendar_app/features/calendar/presentation/cubit/calendar_cubit.dart';
 
 import '../../../../helpers/fixtures.dart';
-
-class MockWatchEvents extends Mock implements WatchEvents {}
-
-class MockDeleteEvent extends Mock implements DeleteEvent {}
+import '../../../../helpers/mocks.dart';
 
 void main() {
   late MockWatchEvents watchEvents;
   late MockDeleteEvent deleteEvent;
 
-  setUpAll(() => registerFallbackValue(const NoParams()));
+  setUpAll(registerCommonFallbacks);
 
   setUp(() {
     watchEvents = MockWatchEvents();
@@ -31,16 +26,18 @@ void main() {
 
   final events = [buildEvent()];
 
+  void streamsEvents() => when(() => watchEvents(any())).thenAnswer(
+        (_) => Stream.value(Right<Failure, List<CalendarEvent>>(events)),
+      );
+
   blocTest<CalendarCubit, CalendarState>(
     'start() goes loading then ready with the streamed events',
-    setUp: () => when(() => watchEvents(any())).thenAnswer(
-      (_) => Stream.value(Right<Failure, List<CalendarEvent>>(events)),
-    ),
+    setUp: streamsEvents,
     build: build,
     act: (cubit) => cubit.start(),
     expect: () => [
-      const CalendarState(status: CalendarStatus.loading),
-      CalendarState(status: CalendarStatus.ready, events: events),
+      const CalendarState(status: LoadStatus.loading),
+      CalendarState(status: LoadStatus.ready, events: events),
     ],
   );
 
@@ -54,19 +51,14 @@ void main() {
     build: build,
     act: (cubit) => cubit.start(),
     expect: () => [
-      const CalendarState(status: CalendarStatus.loading),
-      const CalendarState(
-        status: CalendarStatus.failure,
-        errorMessage: 'boom',
-      ),
+      const CalendarState(status: LoadStatus.loading),
+      const CalendarState(status: LoadStatus.failure, errorMessage: 'boom'),
     ],
   );
 
   blocTest<CalendarCubit, CalendarState>(
     'start() is idempotent — a second call does not resubscribe',
-    setUp: () => when(() => watchEvents(any())).thenAnswer(
-      (_) => Stream.value(Right<Failure, List<CalendarEvent>>(events)),
-    ),
+    setUp: streamsEvents,
     build: build,
     act: (cubit) async {
       await cubit.start();
@@ -96,10 +88,7 @@ void main() {
     build: build,
     act: (cubit) => cubit.deleteEvent('event-1'),
     expect: () => [
-      const CalendarState(
-        status: CalendarStatus.failure,
-        errorMessage: 'locked',
-      ),
+      const CalendarState(status: LoadStatus.failure, errorMessage: 'locked'),
     ],
   );
 

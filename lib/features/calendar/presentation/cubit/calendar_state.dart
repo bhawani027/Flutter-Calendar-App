@@ -1,7 +1,5 @@
 part of 'calendar_cubit.dart';
 
-enum CalendarStatus { initial, loading, ready, failure }
-
 /// The four ways the calendar can be displayed.
 ///
 /// Replaces the four near-identical screens the app used to have.
@@ -19,22 +17,21 @@ enum CalendarViewType {
 
 class CalendarState extends Equatable {
   const CalendarState({
-    this.status = CalendarStatus.initial,
+    this.status = LoadStatus.initial,
     this.events = const [],
     this.view = CalendarViewType.month,
     this.errorMessage,
   });
 
-  final CalendarStatus status;
+  final LoadStatus status;
   final List<CalendarEvent> events;
   final CalendarViewType view;
   final String? errorMessage;
 
-  bool get isBusy =>
-      status == CalendarStatus.initial || status == CalendarStatus.loading;
+  bool get isBusy => status.isBusy;
 
   CalendarState copyWith({
-    CalendarStatus? status,
+    LoadStatus? status,
     List<CalendarEvent>? events,
     CalendarViewType? view,
     String? errorMessage,

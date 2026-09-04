@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/di/injector.dart';
 import '../../features/calendar/domain/entities/attendee.dart';
 import '../../features/calendar/domain/entities/calendar_event.dart';
+import '../../features/calendar/presentation/cubit/calendar_cubit.dart';
 import '../../features/calendar/presentation/cubit/event_editor_cubit.dart';
 import '../../features/calendar/presentation/pages/attendees_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
@@ -47,14 +48,17 @@ abstract final class AppRouter {
             const EventEditorArgs();
         return MaterialPageRoute<bool>(
           settings: settings,
-          builder: (_) => BlocProvider(
+          builder: (calendarContext) => BlocProvider(
             create: (_) => EventEditorCubit(
               createEvent: sl(),
               updateEvent: sl(),
               existing: args.event,
               initialDate: args.initialDate,
             ),
-            child: const EventEditorPage(),
+            child: EventEditorPage(
+              onDelete: (id) =>
+                  calendarContext.read<CalendarCubit>().deleteEvent(id),
+            ),
           ),
         );
 

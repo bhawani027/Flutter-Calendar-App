@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive_ce/hive.dart';
 
 import '../../../../core/error/exceptions.dart';
+import '../../domain/entities/calendar_event.dart';
 import '../models/calendar_event_model.dart';
 
 /// Where events physically live.
@@ -10,9 +11,9 @@ import '../models/calendar_event_model.dart';
 /// Swapping Hive for sqflite, a REST API, or an in-memory fake means writing
 /// another implementation of this interface — nothing above it changes.
 abstract interface class EventLocalDataSource {
-  Future<List<CalendarEventModel>> readAll();
+  Future<List<CalendarEvent>> readAll();
 
-  Future<void> write(CalendarEventModel event);
+  Future<void> write(CalendarEvent event);
 
   Future<void> delete(String id);
 
@@ -31,7 +32,7 @@ class HiveEventLocalDataSource implements EventLocalDataSource {
   final Box<String> _box;
 
   @override
-  Future<List<CalendarEventModel>> readAll() async {
+  Future<List<CalendarEvent>> readAll() async {
     try {
       return _box.values
           .map(
@@ -46,9 +47,9 @@ class HiveEventLocalDataSource implements EventLocalDataSource {
   }
 
   @override
-  Future<void> write(CalendarEventModel event) async {
+  Future<void> write(CalendarEvent event) async {
     try {
-      await _box.put(event.id, jsonEncode(event.toJson()));
+      await _box.put(event.id, jsonEncode(CalendarEventModel.toJson(event)));
     } catch (error) {
       throw CacheException('Failed to save event ${event.id}: $error');
     }
