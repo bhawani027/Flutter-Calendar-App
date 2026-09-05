@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/presentation/load_status.dart';
 import '../../domain/entities/time_zone_option.dart';
 import '../../domain/usecases/search_time_zones.dart';
 
@@ -12,18 +13,20 @@ class TimeZoneCubit extends Cubit<TimeZoneState> {
   final SearchTimeZones _searchTimeZones;
 
   Future<void> search([String query = '']) async {
-    emit(state.copyWith(status: TimeZoneStatus.loading, query: query));
+    emit(state.copyWith(
+      status: LoadStatus.loading,
+      query: query,
+      clearError: true,
+    ));
     final result = await _searchTimeZones(query);
     result.match(
       (failure) => emit(
         state.copyWith(
-          status: TimeZoneStatus.failure,
+          status: LoadStatus.failure,
           errorMessage: failure.message,
         ),
       ),
-      (zones) => emit(
-        state.copyWith(status: TimeZoneStatus.ready, zones: zones),
-      ),
+      (zones) => emit(state.copyWith(status: LoadStatus.ready, zones: zones)),
     );
   }
 }

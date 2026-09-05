@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/extensions/date_time_extensions.dart';
+import '../../../../core/presentation/load_status.dart';
 import '../../domain/entities/attendee.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../domain/entities/recurrence_rule.dart';
@@ -13,7 +14,9 @@ part 'event_editor_state.dart';
 /// Drives the add/edit event form.
 ///
 /// The old `Meetingeditor` did all of this in `setState` across 391 lines; the
-/// widget is now purely a rendering of this state.
+/// widget is now purely a rendering of this state. Edits are applied with
+/// `copyWith` on the event itself, so fields the form does not show — on an
+/// existing event — survive a save untouched.
 class EventEditorCubit extends Cubit<EventEditorState> {
   EventEditorCubit({
     required CreateEvent createEvent,
@@ -23,109 +26,80 @@ class EventEditorCubit extends Cubit<EventEditorState> {
   })  : _createEvent = createEvent,
         _updateEvent = updateEvent,
         super(
-          existing != null
-              ? EventEditorState.from(existing)
-              : EventEditorState.blank(initialDate ?? DateTime.now()),
+          EventEditorState(
+            draft: existing ?? CalendarEvent.draft(initialDate ?? DateTime.now()),
+            isNew: existing == null,
+          ),
         );
 
   final CreateEvent _createEvent;
   final UpdateEvent _updateEvent;
 
+  void _edit(CalendarEvent Function(CalendarEvent draft) change) =>
+      emit(state.copyWith(draft: change(state.draft), clearError: true));
+
   void titleChanged(String value) =>
-      emit(state.copyWith(title: value, clearError: true));
+      _edit((draft) => draft.copyWith(title: value));
 
-  void notesChanged(String value) => emit(state.copyWith(notes: value));
+  void notesChanged(String value) =>
+      _edit((draft) => draft.copyWith(notes: value));
 
-  void allDayToggled(bool value) => emit(state.copyWith(isAllDay: value));
+  void allDayToggled(bool value) =>
+      _edit((draft) => draft.copyWith(isAllDay: value));
 
   void colorSelected(int colorValue) =>
-      emit(state.copyWith(colorValue: colorValue));
+      _edit((draft) => draft.copyWith(colorValue: colorValue));
 
   void recurrenceSelected(RecurrenceRule rule) =>
-      emit(state.copyWith(recurrence: rule));
+      _edit((draft) => draft.copyWith(recurrence: rule));
 
   void attendeesChanged(List<Attendee> attendees) =>
-      emit(state.copyWith(attendees: attendees));
+      _edit((draft) => draft.copyWith(attendees: attendees));
 
   void locationChanged(String? location) =>
-      emit(state.copyWith(location: location));
+      _edit((draft) => draft.copyWith(location: location));
 
   void timeZoneChanged(String? timeZoneId) =>
-      emit(state.copyWith(timeZoneId: timeZoneId));
+      _edit((draft) => draft.copyWith(timeZoneId: timeZoneId));
 
   /// Moves the start, dragging the end along so the duration is preserved.
-  void startDateChanged(DateTime date) {
-    final start = state.start.withDate(date);
-    emit(state.copyWith(start: start, end: start.add(_duration)));
-  }
+  void startDateChanged(DateTime date) => _moveStart(state.draft.start.withDate(date));
 
-  void startTimeChanged(int hour, int minute) {
-    final start = state.start.withTime(hour, minute);
-    emit(state.copyWith(start: start, end: start.add(_duration)));
+  void startTimeChanged(int hour, int minute) =>
+      _moveStart(state.draft.start.withTime(hour, minute));
+
+  void _moveStart(DateTime start) {
+    final current = state.draft.duration;
+    final span = current > Duration.zero ? current : const Duration(hours: 1);
+    _edit((draft) => draft.copyWith(start: start, end: start.add(span)));
   }
 
   void endDateChanged(DateTime date) =>
-      emit(state.copyWith(end: state.end.withDate(date), clearError: true));
+      _edit((draft) => draft.copyWith(end: draft.end.withDate(date)));
 
-  void endTimeChanged(int hour, int minute) => emit(
-        state.copyWith(end: state.end.withTime(hour, minute), clearError: true),
-      );
-
-  Duration get _duration {
-    final current = state.end.difference(state.start);
-    return current > Duration.zero ? current : const Duration(hours: 1);
-  }
+  void endTimeChanged(int hour, int minute) =>
+      _edit((draft) => draft.copyWith(end: draft.end.withTime(hour, minute)));
 
   /// Saves the form. Returns true when the event was persisted.
   Future<bool> submit() async {
-    emit(state.copyWith(status: EventEditorStatus.saving, clearError: true));
+    emit(state.copyWith(status: LoadStatus.loading, clearError: true));
 
-    final start = state.isAllDay ? state.start.startOfDay : state.start;
-    final end = state.isAllDay ? state.end.endOfDay : state.end;
-
-    final result = state.isEditing
-        ? await _updateEvent(
-            CalendarEvent(
-              id: state.id!,
-              title: state.title,
-              start: start,
-              end: end,
-              isAllDay: state.isAllDay,
-              colorValue: state.colorValue,
-              attendees: state.attendees,
-              recurrence: state.recurrence,
-              location: state.location,
-              notes: state.notes,
-              timeZoneId: state.timeZoneId,
-            ),
-          )
-        : await _createEvent(
-            CreateEventParams(
-              title: state.title,
-              start: start,
-              end: end,
-              isAllDay: state.isAllDay,
-              colorValue: state.colorValue,
-              attendees: state.attendees,
-              recurrence: state.recurrence,
-              location: state.location,
-              notes: state.notes,
-              timeZoneId: state.timeZoneId,
-            ),
-          );
+    final result = state.isNew
+        ? await _createEvent(state.draft)
+        : await _updateEvent(state.draft);
 
     return result.match(
       (failure) {
         emit(
           state.copyWith(
-            status: EventEditorStatus.failure,
+            status: LoadStatus.failure,
             errorMessage: failure.message,
           ),
         );
         return false;
       },
       (_) {
-        emit(state.copyWith(status: EventEditorStatus.saved));
+        emit(state.copyWith(status: LoadStatus.ready));
         return true;
       },
     );

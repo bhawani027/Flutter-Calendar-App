@@ -32,7 +32,7 @@ class LocationPickerPage extends StatelessWidget {
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: () =>
-                          Navigator.of(context).pop(state.place),
+                          Navigator.of(context).pop(state.place!.displayName),
                       child: const Text('Use this location'),
                     ),
                   ] else if (state.errorMessage != null)

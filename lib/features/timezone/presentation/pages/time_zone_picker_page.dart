@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/presentation/load_status.dart';
 import '../cubit/time_zone_cubit.dart';
 
 /// Search the IANA time zone list. Pops the selected zone id.
@@ -48,13 +49,13 @@ class _TimeZonePickerPageState extends State<TimeZonePickerPage> {
           Expanded(
             child: BlocBuilder<TimeZoneCubit, TimeZoneState>(
               builder: (context, state) {
-                if (state.status == TimeZoneStatus.failure) {
+                if (state.status == LoadStatus.failure) {
                   return Center(child: Text(state.errorMessage!));
                 }
                 if (state.zones.isEmpty) {
                   return Center(
                     child: Text(
-                      state.status == TimeZoneStatus.ready
+                      state.status == LoadStatus.ready
                           ? 'No time zone matches "${state.query}".'
                           : 'Loading time zones…',
                     ),

@@ -14,8 +14,6 @@ enum RecurrenceRule {
   final String label;
   final String? rrule;
 
-  bool get repeats => rrule != null;
-
   /// Parses a stored rule name, falling back to [never] for unknown values.
   static RecurrenceRule fromName(String? name) => values.firstWhere(
         (rule) => rule.name == name,

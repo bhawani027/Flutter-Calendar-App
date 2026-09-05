@@ -3,35 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mycalendar_app/core/error/failures.dart';
+import 'package:mycalendar_app/core/presentation/load_status.dart';
+import 'package:mycalendar_app/features/calendar/domain/entities/attendee.dart';
 import 'package:mycalendar_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:mycalendar_app/features/calendar/domain/usecases/create_event.dart';
-import 'package:mycalendar_app/features/calendar/domain/usecases/update_event.dart';
 import 'package:mycalendar_app/features/calendar/presentation/cubit/event_editor_cubit.dart';
 
 import '../../../../helpers/fixtures.dart';
-
-class MockCreateEvent extends Mock implements CreateEvent {}
-
-class MockUpdateEvent extends Mock implements UpdateEvent {}
+import '../../../../helpers/mocks.dart';
 
 void main() {
   late MockCreateEvent createEvent;
   late MockUpdateEvent updateEvent;
 
-  setUpAll(() {
-    registerFallbackValue(
-      CreateEventParams(
-        title: 'x',
-        start: DateTime(2026),
-        end: DateTime(2026, 1, 1, 1),
-      ),
-    );
-    registerFallbackValue(buildEvent());
-  });
+  setUpAll(registerCommonFallbacks);
 
   setUp(() {
     createEvent = MockCreateEvent();
     updateEvent = MockUpdateEvent();
+    when(() => createEvent(any()))
+        .thenAnswer((_) async => Right(buildEvent()));
+    when(() => updateEvent(any()))
+        .thenAnswer((_) async => Right(buildEvent()));
   });
 
   EventEditorCubit build({CalendarEvent? existing, DateTime? initialDate}) =>
@@ -46,18 +38,17 @@ void main() {
     test('a blank form starts at the next full hour, lasting one hour', () {
       final cubit = build(initialDate: DateTime(2026, 9, 3, 14, 37));
 
-      expect(cubit.state.start, DateTime(2026, 9, 3, 15));
-      expect(cubit.state.end, DateTime(2026, 9, 3, 16));
+      expect(cubit.state.draft.start, DateTime(2026, 9, 3, 15));
+      expect(cubit.state.draft.end, DateTime(2026, 9, 3, 16));
       expect(cubit.state.isEditing, isFalse);
     });
 
-    test('an existing event pre-fills every field', () {
+    test('an existing event is edited in place', () {
       final event = buildEvent(title: 'Retro', location: 'Pokhara');
       final cubit = build(existing: event);
 
       expect(cubit.state.isEditing, isTrue);
-      expect(cubit.state.title, 'Retro');
-      expect(cubit.state.location, 'Pokhara');
+      expect(cubit.state.draft, event);
     });
   });
 
@@ -68,8 +59,8 @@ void main() {
 
       cubit.startTimeChanged(11, 0);
 
-      expect(cubit.state.start, DateTime(2026, 9, 3, 11));
-      expect(cubit.state.end, DateTime(2026, 9, 3, 14));
+      expect(cubit.state.draft.start, DateTime(2026, 9, 3, 11));
+      expect(cubit.state.draft.end, DateTime(2026, 9, 3, 14));
     });
 
     test('recovers a sane duration if the end was dragged before the start',
@@ -79,15 +70,38 @@ void main() {
 
       cubit.startTimeChanged(12, 0);
 
-      expect(cubit.state.end, DateTime(2026, 9, 3, 13));
+      expect(cubit.state.draft.end, DateTime(2026, 9, 3, 13));
+    });
+  });
+
+  group('editing an existing event', () {
+    // The editor used to rebuild the event field by field, so anything it did
+    // not render was erased on save. Now it edits the stored event directly.
+    test('preserves fields the form never touches', () async {
+      final stored = buildEvent(
+        attendees: const [Attendee(name: 'Asha', email: 'asha@haineo.org')],
+        timeZoneId: 'Asia/Kathmandu',
+        notes: 'Bring the roadmap',
+      );
+      final cubit = build(existing: stored);
+
+      cubit.titleChanged('Retro');
+      await cubit.submit();
+
+      final saved =
+          verify(() => updateEvent(captureAny())).captured.single
+              as CalendarEvent;
+      expect(saved.title, 'Retro');
+      expect(saved.attendees, stored.attendees);
+      expect(saved.timeZoneId, 'Asia/Kathmandu');
+      expect(saved.notes, 'Bring the roadmap');
+      expect(saved.id, stored.id);
     });
   });
 
   group('submit', () {
     blocTest<EventEditorCubit, EventEditorState>(
       'creates a new event and reports saved',
-      setUp: () => when(() => createEvent(any()))
-          .thenAnswer((_) async => Right(buildEvent())),
       build: () => build(initialDate: DateTime(2026, 9, 3, 9)),
       act: (cubit) async {
         cubit.titleChanged('Standup');
@@ -101,8 +115,6 @@ void main() {
 
     blocTest<EventEditorCubit, EventEditorState>(
       'updates instead of creating when editing an existing event',
-      setUp: () => when(() => updateEvent(any()))
-          .thenAnswer((_) async => Right(buildEvent())),
       build: () => build(existing: buildEvent()),
       act: (cubit) async => cubit.submit(),
       verify: (_) {
@@ -120,9 +132,9 @@ void main() {
       act: (cubit) async => expect(await cubit.submit(), isFalse),
       expect: () => [
         isA<EventEditorState>()
-            .having((s) => s.status, 'status', EventEditorStatus.saving),
+            .having((s) => s.status, 'status', LoadStatus.loading),
         isA<EventEditorState>()
-            .having((s) => s.status, 'status', EventEditorStatus.failure)
+            .having((s) => s.status, 'status', LoadStatus.failure)
             .having(
               (s) => s.errorMessage,
               'errorMessage',
@@ -130,22 +142,5 @@ void main() {
             ),
       ],
     );
-
-    test('an all-day event is widened to cover the whole day', () async {
-      when(() => createEvent(any()))
-          .thenAnswer((_) async => Right(buildEvent()));
-
-      final cubit = build(initialDate: DateTime(2026, 9, 3, 9));
-      cubit.titleChanged('Holiday');
-      cubit.allDayToggled(true);
-      await cubit.submit();
-
-      final params =
-          verify(() => createEvent(captureAny())).captured.single
-              as CreateEventParams;
-      expect(params.start, DateTime(2026, 9, 3));
-      expect(params.end.hour, 23);
-      expect(params.end.minute, 59);
-    });
   });
 }

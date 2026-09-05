@@ -4,6 +4,6 @@ import '../../../../core/error/failures.dart';
 import '../entities/time_zone_option.dart';
 
 abstract interface class TimeZoneRepository {
-  /// All known zones whose id matches [query] (empty query returns everything).
-  Future<Either<Failure, List<TimeZoneOption>>> search(String query);
+  /// Every zone in the IANA database.
+  Future<Either<Failure, List<TimeZoneOption>>> getAll();
 }

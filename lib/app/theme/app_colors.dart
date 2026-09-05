@@ -30,10 +30,14 @@ abstract final class AppColors {
   static const Color seed = Color(0xFF0F8644);
 
   /// The label for a stored colour value, for display in the editor.
+  ///
+  /// Every colour the app can assign is in [eventPalette] — including
+  /// `CalendarEvent.defaultColorValue` — so an unknown value means data from
+  /// an older build.
   static String nameOf(int value) => eventPalette
       .firstWhere(
         (entry) => entry.value == value,
-        orElse: () => const EventColor('Blue', 0xFF2196F3),
+        orElse: () => const EventColor('Custom', 0),
       )
       .name;
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/presentation/error_snack_bar.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../cubit/calendar_cubit.dart';
 import '../widgets/calendar_view_drawer.dart';
@@ -26,6 +27,19 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     super.initState();
     context.read<CalendarCubit>().start();
+  }
+
+  List<CalendarEvent>? _sourceEvents;
+  EventCalendarDataSource? _dataSource;
+
+  /// Rebuilds the Syncfusion adapter only when the event list actually
+  /// changes, rather than on every frame.
+  EventCalendarDataSource _dataSourceFor(List<CalendarEvent> events) {
+    if (!identical(_sourceEvents, events) || _dataSource == null) {
+      _sourceEvents = events;
+      _dataSource = EventCalendarDataSource(events);
+    }
+    return _dataSource!;
   }
 
   @override
@@ -66,12 +80,9 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     return BlocConsumer<CalendarCubit, CalendarState>(
       listenWhen: (previous, current) =>
-          current.errorMessage != null &&
-          previous.errorMessage != current.errorMessage,
+          errorAppeared(previous.errorMessage, current.errorMessage),
       listener: (context, state) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        showErrorSnackBar(context, state.errorMessage!);
         context.read<CalendarCubit>().clearError();
       },
       builder: (context, state) {
@@ -86,7 +97,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ? const Center(child: CircularProgressIndicator())
               : SfCalendar(
                   controller: _controller,
-                  dataSource: EventCalendarDataSource(state.events),
+                  dataSource: _dataSourceFor(state.events),
                   cellBorderColor: Colors.transparent,
                   showNavigationArrow: true,
                   monthViewSettings: const MonthViewSettings(

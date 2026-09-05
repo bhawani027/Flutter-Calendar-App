@@ -5,7 +5,6 @@ import '../../../../core/error/failures.dart';
 import '../../domain/entities/calendar_event.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_local_data_source.dart';
-import '../models/calendar_event_model.dart';
 
 /// Translates data-source exceptions into domain [Failure]s.
 class EventRepositoryImpl implements EventRepository {
@@ -24,8 +23,7 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<Either<Failure, List<CalendarEvent>>> getEvents() async {
     try {
-      final models = await _localDataSource.readAll();
-      final events = models.map((model) => model.toEntity()).toList()
+      final events = await _localDataSource.readAll()
         ..sort((a, b) => a.start.compareTo(b.start));
       return Right(events);
     } on CacheException catch (error) {
@@ -59,7 +57,7 @@ class EventRepositoryImpl implements EventRepository {
 
   Future<Either<Failure, CalendarEvent>> _save(CalendarEvent event) async {
     try {
-      await _localDataSource.write(CalendarEventModel.fromEntity(event));
+      await _localDataSource.write(event);
       return Right(event);
     } on CacheException catch (error) {
       return Left(CacheFailure(error.message));
