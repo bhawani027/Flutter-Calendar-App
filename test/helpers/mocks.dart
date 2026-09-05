@@ -6,6 +6,11 @@ import 'package:mycalendar_app/features/calendar/domain/usecases/create_event.da
 import 'package:mycalendar_app/features/calendar/domain/usecases/delete_event.dart';
 import 'package:mycalendar_app/features/calendar/domain/usecases/update_event.dart';
 import 'package:mycalendar_app/features/calendar/domain/usecases/watch_events.dart';
+import 'package:mycalendar_app/features/location/data/datasources/device_location_data_source.dart';
+import 'package:mycalendar_app/features/location/domain/usecases/get_current_place.dart';
+import 'package:mycalendar_app/features/timezone/data/datasources/time_zone_data_source.dart';
+import 'package:mycalendar_app/features/timezone/domain/repositories/time_zone_repository.dart';
+import 'package:mycalendar_app/features/timezone/domain/usecases/search_time_zones.dart';
 
 import 'fixtures.dart';
 
@@ -26,3 +31,14 @@ void registerCommonFallbacks() {
   registerFallbackValue(buildEvent());
   registerFallbackValue(const NoParams());
 }
+
+class MockTimeZoneDataSource extends Mock implements TimeZoneDataSource {}
+
+class MockTimeZoneRepository extends Mock implements TimeZoneRepository {}
+
+class MockSearchTimeZones extends Mock implements SearchTimeZones {}
+
+class MockDeviceLocationDataSource extends Mock
+    implements DeviceLocationDataSource {}
+
+class MockGetCurrentPlace extends Mock implements GetCurrentPlace {}

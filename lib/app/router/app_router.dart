@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/di/injector.dart';
 import '../../features/calendar/domain/entities/attendee.dart';
 import '../../features/calendar/domain/entities/calendar_event.dart';
+import '../../features/calendar/presentation/cubit/attendees_cubit.dart';
 import '../../features/calendar/presentation/cubit/calendar_cubit.dart';
 import '../../features/calendar/presentation/cubit/event_editor_cubit.dart';
 import '../../features/calendar/presentation/pages/attendees_page.dart';
@@ -66,7 +67,10 @@ abstract final class AppRouter {
         final attendees = settings.arguments as List<Attendee>? ?? const [];
         return MaterialPageRoute<List<Attendee>>(
           settings: settings,
-          builder: (_) => AttendeesPage(attendees: attendees),
+          builder: (_) => BlocProvider(
+            create: (_) => AttendeesCubit(attendees),
+            child: const AttendeesPage(),
+          ),
         );
 
       case AppRoutes.location:

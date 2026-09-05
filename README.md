@@ -57,7 +57,7 @@ lib/
     │   │   ├── datasources/      # EventLocalDataSource + Hive implementation
     │   │   └── repositories/     # EventRepositoryImpl
     │   └── presentation/
-    │       ├── cubit/            # CalendarCubit, EventEditorCubit
+    │       ├── cubit/            # Calendar, EventEditor, Attendees
     │       ├── pages/            # CalendarPage, EventEditorPage, AttendeesPage
     │       └── widgets/
     ├── timezone/                 # IANA time zone picker (same three layers)
@@ -100,7 +100,8 @@ flutter test
 flutter analyze
 ```
 
-49 tests cover the entities (validation and normalisation), the JSON mapping,
-the use cases, the repository's exception-to-failure translation, and both
-cubits. The domain and data layers need no Flutter bindings; every dependency is
+113 tests cover all three layers of all three features: the entities
+(validation and normalisation), the JSON mapping, the use cases, the
+repositories' exception-to-failure translation, every cubit, and widget tests
+that drive the three pages through their cubits. The domain and data layers need no Flutter bindings; every dependency is
 faked through its interface with `mocktail`.
