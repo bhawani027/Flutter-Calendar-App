@@ -29,10 +29,10 @@ void main() {
 
       final result = await repository.getEvents();
 
-      expect(
-        result.getRight().toNullable()!.map((event) => event.id),
-        ['early', 'late'],
-      );
+      expect(result.getRight().toNullable()!.map((event) => event.id), [
+        'early',
+        'late',
+      ]);
     });
 
     test('turns a CacheException into a CacheFailure', () async {
@@ -56,8 +56,9 @@ void main() {
     });
 
     test('turns a write failure into a CacheFailure', () async {
-      when(() => dataSource.write(any()))
-          .thenThrow(const CacheException('read-only'));
+      when(
+        () => dataSource.write(any()),
+      ).thenThrow(const CacheException('read-only'));
 
       final result = await repository.createEvent(buildEvent());
 
@@ -76,8 +77,9 @@ void main() {
     });
 
     test('turns a delete failure into a CacheFailure', () async {
-      when(() => dataSource.delete(any()))
-          .thenThrow(const CacheException('locked'));
+      when(
+        () => dataSource.delete(any()),
+      ).thenThrow(const CacheException('locked'));
 
       final result = await repository.deleteEvent('event-1');
 
@@ -87,8 +89,9 @@ void main() {
 
   group('watchEvents', () {
     test('emits the current list, then again on every change', () async {
-      when(() => dataSource.changes())
-          .thenAnswer((_) => Stream<void>.fromIterable([null, null]));
+      when(
+        () => dataSource.changes(),
+      ).thenAnswer((_) => Stream<void>.fromIterable([null, null]));
       when(dataSource.readAll).thenAnswer((_) async => [buildEvent()]);
 
       final emissions = await repository.watchEvents().toList();

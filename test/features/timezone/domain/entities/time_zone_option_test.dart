@@ -29,10 +29,7 @@ void main() {
     });
 
     test('handles offsets past 12 hours', () {
-      expect(
-        zoneAt(const Duration(hours: 14)).formattedOffset,
-        'UTC+14:00',
-      );
+      expect(zoneAt(const Duration(hours: 14)).formattedOffset, 'UTC+14:00');
     });
   });
 }

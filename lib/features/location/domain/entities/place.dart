@@ -3,11 +3,7 @@ import 'package:equatable/equatable.dart';
 /// A resolved position on the map, with a human-readable address when one
 /// could be looked up.
 class Place extends Equatable {
-  const Place({
-    required this.latitude,
-    required this.longitude,
-    this.address,
-  });
+  const Place({required this.latitude, required this.longitude, this.address});
 
   final double latitude;
   final double longitude;

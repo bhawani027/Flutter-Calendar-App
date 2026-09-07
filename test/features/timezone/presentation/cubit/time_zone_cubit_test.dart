@@ -20,8 +20,9 @@ void main() {
 
   setUp(() {
     searchTimeZones = MockSearchTimeZones();
-    when(() => searchTimeZones(any()))
-        .thenAnswer((_) async => const Right([kathmandu]));
+    when(
+      () => searchTimeZones(any()),
+    ).thenAnswer((_) async => const Right([kathmandu]));
   });
 
   TimeZoneCubit build() => TimeZoneCubit(searchTimeZones);
@@ -49,8 +50,9 @@ void main() {
 
   blocTest<TimeZoneCubit, TimeZoneState>(
     'a failure is surfaced as a message',
-    setUp: () => when(() => searchTimeZones(any()))
-        .thenAnswer((_) async => const Left(TimeZoneFailure('no db'))),
+    setUp: () => when(
+      () => searchTimeZones(any()),
+    ).thenAnswer((_) async => const Left(TimeZoneFailure('no db'))),
     build: build,
     act: (cubit) => cubit.search('kath'),
     expect: () => [
@@ -66,10 +68,8 @@ void main() {
   blocTest<TimeZoneCubit, TimeZoneState>(
     'a later successful search clears the previous error',
     build: build,
-    seed: () => const TimeZoneState(
-      status: LoadStatus.failure,
-      errorMessage: 'no db',
-    ),
+    seed: () =>
+        const TimeZoneState(status: LoadStatus.failure, errorMessage: 'no db'),
     act: (cubit) => cubit.search('kath'),
     verify: (cubit) => expect(cubit.state.errorMessage, isNull),
   );

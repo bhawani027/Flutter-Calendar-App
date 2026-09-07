@@ -23,14 +23,15 @@ class EventEditorCubit extends Cubit<EventEditorState> {
     required UpdateEvent updateEvent,
     CalendarEvent? existing,
     DateTime? initialDate,
-  })  : _createEvent = createEvent,
-        _updateEvent = updateEvent,
-        super(
-          EventEditorState(
-            draft: existing ?? CalendarEvent.draft(initialDate ?? DateTime.now()),
-            isNew: existing == null,
-          ),
-        );
+  }) : _createEvent = createEvent,
+       _updateEvent = updateEvent,
+       super(
+         EventEditorState(
+           draft:
+               existing ?? CalendarEvent.draft(initialDate ?? DateTime.now()),
+           isNew: existing == null,
+         ),
+       );
 
   final CreateEvent _createEvent;
   final UpdateEvent _updateEvent;
@@ -63,7 +64,8 @@ class EventEditorCubit extends Cubit<EventEditorState> {
       _edit((draft) => draft.copyWith(timeZoneId: timeZoneId));
 
   /// Moves the start, dragging the end along so the duration is preserved.
-  void startDateChanged(DateTime date) => _moveStart(state.draft.start.withDate(date));
+  void startDateChanged(DateTime date) =>
+      _moveStart(state.draft.start.withDate(date));
 
   void startTimeChanged(int hour, int minute) =>
       _moveStart(state.draft.start.withTime(hour, minute));

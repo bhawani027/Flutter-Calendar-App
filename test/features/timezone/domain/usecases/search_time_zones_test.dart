@@ -25,10 +25,9 @@ void main() {
   setUp(() {
     repository = MockTimeZoneRepository();
     useCase = SearchTimeZones(repository);
-    when(repository.getAll).thenAnswer((_) async => const Right([
-          kathmandu,
-          london,
-        ]));
+    when(
+      repository.getAll,
+    ).thenAnswer((_) async => const Right([kathmandu, london]));
   });
 
   test('an empty query returns every zone', () async {
@@ -62,8 +61,9 @@ void main() {
   });
 
   test('propagates a repository failure', () async {
-    when(repository.getAll)
-        .thenAnswer((_) async => const Left(TimeZoneFailure()));
+    when(
+      repository.getAll,
+    ).thenAnswer((_) async => const Left(TimeZoneFailure()));
 
     final result = await useCase('kath');
 

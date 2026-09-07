@@ -30,14 +30,14 @@ void main() {
   });
 
   Widget subject({CalendarEvent? existing}) => BlocProvider(
-        create: (_) => EventEditorCubit(
-          createEvent: createEvent,
-          updateEvent: updateEvent,
-          existing: existing,
-          initialDate: DateTime(2026, 9, 3, 9),
-        ),
-        child: EventEditorPage(onDelete: (id) async => deleted.add(id)),
-      );
+    create: (_) => EventEditorCubit(
+      createEvent: createEvent,
+      updateEvent: updateEvent,
+      existing: existing,
+      initialDate: DateTime(2026, 9, 3, 9),
+    ),
+    child: EventEditorPage(onDelete: (id) async => deleted.add(id)),
+  );
 
   group('adding', () {
     testWidgets('shows the add affordances and no delete', (tester) async {
@@ -70,8 +70,9 @@ void main() {
       expect(saved.title, 'Standup');
     });
 
-    testWidgets('a rejected save shows the reason and stays on the form',
-        (tester) async {
+    testWidgets('a rejected save shows the reason and stays on the form', (
+      tester,
+    ) async {
       when(() => createEvent(any())).thenAnswer(
         (_) async => const Left(ValidationFailure('Give the event a title.')),
       );
@@ -99,10 +100,11 @@ void main() {
   });
 
   group('editing', () {
-    testWidgets('pre-fills the stored event and offers delete',
-        (tester) async {
+    testWidgets('pre-fills the stored event and offers delete', (tester) async {
       await tester.pumpPage(
-        subject(existing: buildEvent(title: 'Retro', location: 'Pokhara')),
+        subject(
+          existing: buildEvent(title: 'Retro', location: 'Pokhara'),
+        ),
       );
 
       expect(find.text('Edit event'), findsOneWidget);
@@ -112,8 +114,9 @@ void main() {
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
     });
 
-    testWidgets('delete asks first and does nothing when cancelled',
-        (tester) async {
+    testWidgets('delete asks first and does nothing when cancelled', (
+      tester,
+    ) async {
       await tester.pumpPage(subject(existing: buildEvent()));
 
       await tester.tap(find.byIcon(Icons.delete_outline));

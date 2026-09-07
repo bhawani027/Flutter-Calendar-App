@@ -45,8 +45,8 @@ abstract final class AppRouter {
         );
 
       case AppRoutes.eventEditor:
-        final args = settings.arguments as EventEditorArgs? ??
-            const EventEditorArgs();
+        final args =
+            settings.arguments as EventEditorArgs? ?? const EventEditorArgs();
         return MaterialPageRoute<bool>(
           settings: settings,
           builder: (calendarContext) => BlocProvider(

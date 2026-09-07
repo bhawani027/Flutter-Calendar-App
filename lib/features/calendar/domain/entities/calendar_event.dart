@@ -118,16 +118,16 @@ class CalendarEvent extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        start,
-        end,
-        isAllDay,
-        colorValue,
-        attendees,
-        recurrence,
-        location,
-        notes,
-        timeZoneId,
-      ];
+    id,
+    title,
+    start,
+    end,
+    isAllDay,
+    colorValue,
+    attendees,
+    recurrence,
+    location,
+    notes,
+    timeZoneId,
+  ];
 }

@@ -77,8 +77,10 @@ void main() {
 
     test('rejects an end that is not after the start', () {
       final start = DateTime(2026, 9, 3, 9);
-      expect(buildEvent(start: start, end: start).validate(),
-          isA<ValidationFailure>());
+      expect(
+        buildEvent(start: start, end: start).validate(),
+        isA<ValidationFailure>(),
+      );
     });
   });
 
