@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/theme/app_theme.dart';
+import '../../../../core/calendar/bikram_sambat.dart';
+import '../../../../core/calendar/nepali_date_labels.dart';
+
 /// A date button and a time button on one row, as used for the event's start
 /// and end. Hides the time half when the event is all-day.
+///
+/// The button carries the Bikram Sambat date under the Gregorian one, so a
+/// date picked here can be read in either calendar. Only the display is dual:
+/// [value] and [onDateChanged] stay Gregorian, which is what the event itself
+/// is stored in.
 class DateTimeField extends StatelessWidget {
   const DateTimeField({
     required this.label,
@@ -52,7 +61,7 @@ class DateTimeField extends StatelessWidget {
           Expanded(
             child: OutlinedButton(
               onPressed: () => _pickDate(context),
-              child: Text(_dateFormat.format(value)),
+              child: _DateLabel(value: value),
             ),
           ),
           if (showTime) ...[
@@ -67,6 +76,39 @@ class DateTimeField extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The Gregorian date with its BS reading beneath.
+class _DateLabel extends StatelessWidget {
+  const _DateLabel({required this.value});
+
+  final DateTime value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bsDate = BikramSambat.tryFromGregorian(value);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          DateTimeField._dateFormat.format(value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (bsDate != null)
+          Text(
+            NepaliDateLabels.fullDate(bsDate),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTheme.nepali(
+              theme.textTheme.labelSmall,
+            ).copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+      ],
     );
   }
 }

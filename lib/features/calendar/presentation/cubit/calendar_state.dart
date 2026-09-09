@@ -53,10 +53,8 @@ class CalendarState extends Equatable {
   }
 
   static bool _weekContains(DateTime focused, DateTime day) {
-    final start = focused.startOfDay.subtract(
-      Duration(days: focused.weekday % 7),
-    );
-    final end = start.add(const Duration(days: 7));
+    final start = focused.startOfWeek;
+    final end = start.addDays(7);
     return !day.isBefore(start) && day.isBefore(end);
   }
 

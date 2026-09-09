@@ -34,6 +34,7 @@ dependencies:
   get_it: ^9.2.1
   intl: ^0.20.2
   uuid: ^4.6.0
+  nepali_utils: ^3.0.8
 
 dev_dependencies:
   flutter_test:

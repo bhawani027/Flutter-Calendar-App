@@ -8,6 +8,16 @@ extension DateTimeX on DateTime {
   bool isSameDay(DateTime other) =>
       year == other.year && month == other.month && day == other.day;
 
+  /// Midnight on the Sunday that opens this date's week.
+  ///
+  /// Counted in calendar days rather than by subtracting a `Duration`: 24 hours
+  /// back from a Monday is not always Sunday, since the clocks may have moved
+  /// in between.
+  DateTime get startOfWeek => DateTime(year, month, day - weekday % 7);
+
+  /// Midnight [days] calendar days after this date.
+  DateTime addDays(int days) => DateTime(year, month, day + days);
+
   /// Replaces the time-of-day while keeping the calendar date.
   DateTime withTime(int hour, int minute) =>
       DateTime(year, month, day, hour, minute);
