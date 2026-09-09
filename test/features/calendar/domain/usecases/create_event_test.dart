@@ -27,8 +27,7 @@ void main() {
     String title = 'Standup',
     DateTime? end,
     bool isAllDay = false,
-  }) =>
-      buildEvent(id: '', title: title, end: end, isAllDay: isAllDay);
+  }) => buildEvent(id: '', title: title, end: end, isAllDay: isAllDay);
 
   test('persists the event with a generated id and trimmed title', () async {
     final result = await useCase(draft(title: '  Standup  '));
@@ -63,8 +62,9 @@ void main() {
   });
 
   test('passes a repository failure straight through', () async {
-    when(() => repository.createEvent(any()))
-        .thenAnswer((_) async => const Left(CacheFailure('disk full')));
+    when(
+      () => repository.createEvent(any()),
+    ).thenAnswer((_) async => const Left(CacheFailure('disk full')));
 
     final result = await useCase(draft());
 

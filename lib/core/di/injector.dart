@@ -32,25 +32,19 @@ final GetIt sl = GetIt.instance;
 Future<void> configureDependencies() async {
   await Hive.initFlutter();
 
-  final eventBox = await Hive.openBox<String>(
-    HiveEventLocalDataSource.boxName,
-  );
+  final eventBox = await Hive.openBox<String>(HiveEventLocalDataSource.boxName);
 
   // ---- External -----------------------------------------------------------
   sl
     ..registerLazySingleton<Box<String>>(() => eventBox)
-    ..registerLazySingleton<IdGenerator>(
-      () => const UuidIdGenerator(Uuid()),
-    );
+    ..registerLazySingleton<IdGenerator>(() => const UuidIdGenerator(Uuid()));
 
   // ---- Data sources -------------------------------------------------------
   sl
     ..registerLazySingleton<EventLocalDataSource>(
       () => HiveEventLocalDataSource(sl()),
     )
-    ..registerLazySingleton<TimeZoneDataSource>(
-      TzDatabaseDataSource.new,
-    )
+    ..registerLazySingleton<TimeZoneDataSource>(TzDatabaseDataSource.new)
     ..registerLazySingleton<DeviceLocationDataSource>(
       () => const GeolocatorLocationDataSource(),
     );
@@ -77,9 +71,7 @@ Future<void> configureDependencies() async {
   // ---- Cubits -------------------------------------------------------------
   // Registered as factories: each screen gets its own instance.
   sl
-    ..registerFactory(
-      () => CalendarCubit(watchEvents: sl(), deleteEvent: sl()),
-    )
+    ..registerFactory(() => CalendarCubit(watchEvents: sl(), deleteEvent: sl()))
     ..registerFactory(() => TimeZoneCubit(sl()))
     ..registerFactory(() => LocationCubit(sl()));
 }

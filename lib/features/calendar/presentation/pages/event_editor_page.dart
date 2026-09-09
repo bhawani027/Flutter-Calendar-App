@@ -27,12 +27,16 @@ class EventEditorPage extends StatefulWidget {
 }
 
 class _EventEditorPageState extends State<EventEditorPage> {
-  late final CalendarEvent _initial =
-      context.read<EventEditorCubit>().state.draft;
-  late final TextEditingController _titleController =
-      TextEditingController(text: _initial.title);
-  late final TextEditingController _notesController =
-      TextEditingController(text: _initial.notes);
+  late final CalendarEvent _initial = context
+      .read<EventEditorCubit>()
+      .state
+      .draft;
+  late final TextEditingController _titleController = TextEditingController(
+    text: _initial.title,
+  );
+  late final TextEditingController _notesController = TextEditingController(
+    text: _initial.notes,
+  );
 
   @override
   void dispose() {
@@ -42,8 +46,9 @@ class _EventEditorPageState extends State<EventEditorPage> {
   }
 
   Future<void> _pickAttendees(List<Attendee> current) async {
-    final result = await Navigator.of(context)
-        .pushNamed(AppRoutes.attendees, arguments: current);
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(AppRoutes.attendees, arguments: current);
     if (result is List<Attendee> && mounted) {
       context.read<EventEditorCubit>().attendeesChanged(result);
     }

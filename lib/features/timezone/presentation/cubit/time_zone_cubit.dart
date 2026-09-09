@@ -13,11 +13,13 @@ class TimeZoneCubit extends Cubit<TimeZoneState> {
   final SearchTimeZones _searchTimeZones;
 
   Future<void> search([String query = '']) async {
-    emit(state.copyWith(
-      status: LoadStatus.loading,
-      query: query,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        status: LoadStatus.loading,
+        query: query,
+        clearError: true,
+      ),
+    );
     final result = await _searchTimeZones(query);
     result.match(
       (failure) => emit(

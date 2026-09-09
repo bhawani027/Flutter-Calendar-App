@@ -26,9 +26,7 @@ class LocationFailure extends Failure {
 }
 
 class PermissionFailure extends Failure {
-  const PermissionFailure([
-    super.message = 'Location permission was denied.',
-  ]);
+  const PermissionFailure([super.message = 'Location permission was denied.']);
 }
 
 class TimeZoneFailure extends Failure {

@@ -18,8 +18,9 @@ void main() {
 
   setUp(() {
     getCurrentPlace = MockGetCurrentPlace();
-    when(() => getCurrentPlace(any()))
-        .thenAnswer((_) async => const Right(place));
+    when(
+      () => getCurrentPlace(any()),
+    ).thenAnswer((_) async => const Right(place));
   });
 
   LocationCubit build() => LocationCubit(getCurrentPlace);
@@ -36,26 +37,22 @@ void main() {
 
   blocTest<LocationCubit, LocationState>(
     'a permission failure is surfaced as a message',
-    setUp: () => when(() => getCurrentPlace(any()))
-        .thenAnswer((_) async => const Left(PermissionFailure('denied'))),
+    setUp: () => when(
+      () => getCurrentPlace(any()),
+    ).thenAnswer((_) async => const Left(PermissionFailure('denied'))),
     build: build,
     act: (cubit) => cubit.locate(),
     expect: () => [
       const LocationState(status: LoadStatus.loading),
-      const LocationState(
-        status: LoadStatus.failure,
-        errorMessage: 'denied',
-      ),
+      const LocationState(status: LoadStatus.failure, errorMessage: 'denied'),
     ],
   );
 
   blocTest<LocationCubit, LocationState>(
     'retrying after a failure clears the error',
     build: build,
-    seed: () => const LocationState(
-      status: LoadStatus.failure,
-      errorMessage: 'denied',
-    ),
+    seed: () =>
+        const LocationState(status: LoadStatus.failure, errorMessage: 'denied'),
     act: (cubit) => cubit.locate(),
     verify: (cubit) => expect(cubit.state.errorMessage, isNull),
   );

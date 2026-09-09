@@ -29,8 +29,9 @@ void main() {
   // The two device problems are distinguished so the UI can tell the user to
   // grant permission rather than to turn location services on.
   test('a denied permission becomes a PermissionFailure', () async {
-    when(dataSource.getCurrentPlace)
-        .thenThrow(const LocationPermissionException('denied'));
+    when(
+      dataSource.getCurrentPlace,
+    ).thenThrow(const LocationPermissionException('denied'));
 
     final result = await repository.getCurrentPlace();
 
@@ -38,8 +39,9 @@ void main() {
   });
 
   test('a disabled location service becomes a LocationFailure', () async {
-    when(dataSource.getCurrentPlace)
-        .thenThrow(const LocationServiceException('services off'));
+    when(
+      dataSource.getCurrentPlace,
+    ).thenThrow(const LocationServiceException('services off'));
 
     final result = await repository.getCurrentPlace();
 

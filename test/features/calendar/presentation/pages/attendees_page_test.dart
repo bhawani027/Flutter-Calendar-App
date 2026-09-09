@@ -13,9 +13,9 @@ void main() {
   const asha = Attendee(name: 'Asha', email: 'asha@haineo.org');
 
   Widget subject([List<Attendee> initial = const []]) => BlocProvider(
-        create: (_) => AttendeesCubit(initial),
-        child: const AttendeesPage(),
-      );
+    create: (_) => AttendeesCubit(initial),
+    child: const AttendeesPage(),
+  );
 
   Future<void> typePerson(
     WidgetTester tester,
@@ -40,8 +40,9 @@ void main() {
     expect(find.text('Nobody invited yet.'), findsNothing);
   });
 
-  testWidgets('adding a person lists them and clears the fields',
-      (tester) async {
+  testWidgets('adding a person lists them and clears the fields', (
+    tester,
+  ) async {
     await tester.pumpPage(subject());
 
     await typePerson(tester, 'Asha', 'asha@haineo.org');
@@ -86,8 +87,9 @@ void main() {
     expect(find.text('Nobody invited yet.'), findsOneWidget);
   });
 
-  testWidgets('backing out returns the edited list to the caller',
-      (tester) async {
+  testWidgets('backing out returns the edited list to the caller', (
+    tester,
+  ) async {
     List<Attendee>? returned;
 
     await tester.pumpPage(

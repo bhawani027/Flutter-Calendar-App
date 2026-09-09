@@ -17,8 +17,9 @@ void main() {
         timeZoneId: 'Asia/Kathmandu',
       );
 
-      final restored =
-          CalendarEventModel.fromJson(CalendarEventModel.toJson(original));
+      final restored = CalendarEventModel.fromJson(
+        CalendarEventModel.toJson(original),
+      );
 
       expect(restored, equals(original));
     });
@@ -27,8 +28,9 @@ void main() {
     // built directly. A model subclass never would — Equatable includes the
     // runtime type.
     test('decodes to a plain CalendarEvent', () {
-      final restored =
-          CalendarEventModel.fromJson(CalendarEventModel.toJson(buildEvent()));
+      final restored = CalendarEventModel.fromJson(
+        CalendarEventModel.toJson(buildEvent()),
+      );
 
       expect(restored.runtimeType, CalendarEvent);
     });

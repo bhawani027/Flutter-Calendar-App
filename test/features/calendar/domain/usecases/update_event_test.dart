@@ -47,8 +47,7 @@ void main() {
 
   test('applies the same validation rules', () async {
     final blank = await useCase(buildEvent(title: '  '));
-    final inverted =
-        await useCase(buildEvent(end: DateTime(2026, 9, 3, 8)));
+    final inverted = await useCase(buildEvent(end: DateTime(2026, 9, 3, 8)));
 
     expect(blank.getLeft().toNullable(), isA<ValidationFailure>());
     expect(inverted.getLeft().toNullable(), isA<ValidationFailure>());

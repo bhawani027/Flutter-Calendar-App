@@ -12,7 +12,7 @@ part 'attendees_state.dart';
 /// widget validator rather than on [Attendee].
 class AttendeesCubit extends Cubit<AttendeesState> {
   AttendeesCubit(List<Attendee> initial)
-      : super(AttendeesState(attendees: List.unmodifiable(initial)));
+    : super(AttendeesState(attendees: List.unmodifiable(initial)));
 
   void nameChanged(String value) =>
       emit(state.copyWith(name: value, clearError: true));

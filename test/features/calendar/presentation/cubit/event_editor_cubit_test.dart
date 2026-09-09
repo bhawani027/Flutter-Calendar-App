@@ -20,10 +20,8 @@ void main() {
   setUp(() {
     createEvent = MockCreateEvent();
     updateEvent = MockUpdateEvent();
-    when(() => createEvent(any()))
-        .thenAnswer((_) async => Right(buildEvent()));
-    when(() => updateEvent(any()))
-        .thenAnswer((_) async => Right(buildEvent()));
+    when(() => createEvent(any())).thenAnswer((_) async => Right(buildEvent()));
+    when(() => updateEvent(any())).thenAnswer((_) async => Right(buildEvent()));
   });
 
   EventEditorCubit build({CalendarEvent? existing, DateTime? initialDate}) =>
@@ -63,15 +61,17 @@ void main() {
       expect(cubit.state.draft.end, DateTime(2026, 9, 3, 14));
     });
 
-    test('recovers a sane duration if the end was dragged before the start',
-        () {
-      final cubit = build(initialDate: DateTime(2026, 9, 3, 9));
-      cubit.endTimeChanged(8, 0); // end now precedes start
+    test(
+      'recovers a sane duration if the end was dragged before the start',
+      () {
+        final cubit = build(initialDate: DateTime(2026, 9, 3, 9));
+        cubit.endTimeChanged(8, 0); // end now precedes start
 
-      cubit.startTimeChanged(12, 0);
+        cubit.startTimeChanged(12, 0);
 
-      expect(cubit.state.draft.end, DateTime(2026, 9, 3, 13));
-    });
+        expect(cubit.state.draft.end, DateTime(2026, 9, 3, 13));
+      },
+    );
   });
 
   group('editing an existing event', () {
@@ -131,8 +131,11 @@ void main() {
       build: () => build(initialDate: DateTime(2026, 9, 3, 9)),
       act: (cubit) async => expect(await cubit.submit(), isFalse),
       expect: () => [
-        isA<EventEditorState>()
-            .having((s) => s.status, 'status', LoadStatus.loading),
+        isA<EventEditorState>().having(
+          (s) => s.status,
+          'status',
+          LoadStatus.loading,
+        ),
         isA<EventEditorState>()
             .having((s) => s.status, 'status', LoadStatus.failure)
             .having(

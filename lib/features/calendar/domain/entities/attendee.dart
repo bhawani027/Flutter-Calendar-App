@@ -25,8 +25,7 @@ class Attendee extends Equatable {
   }
 
   /// The form this person takes once added: surrounding space removed.
-  Attendee normalized() =>
-      Attendee(name: name.trim(), email: email.trim());
+  Attendee normalized() => Attendee(name: name.trim(), email: email.trim());
 
   @override
   List<Object?> get props => [name, email];
