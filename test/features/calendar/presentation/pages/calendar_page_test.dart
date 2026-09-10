@@ -7,6 +7,8 @@ import 'package:mycalendar_app/core/error/failures.dart';
 import 'package:mycalendar_app/features/calendar/domain/entities/calendar_event.dart';
 import 'package:mycalendar_app/features/calendar/presentation/cubit/calendar_cubit.dart';
 import 'package:mycalendar_app/features/calendar/presentation/pages/calendar_page.dart';
+import 'package:mycalendar_app/features/calendar/presentation/widgets/calendar_period_label.dart';
+import 'package:mycalendar_app/features/calendar/presentation/widgets/dual_date_strip.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../../helpers/fixtures.dart';
@@ -174,6 +176,150 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byTooltip('Go to today'), findsNothing);
+    });
+  });
+
+  group('the two calendars', () {
+    // The calendar widget also renders the month name inside the grid, so the
+    // header assertions look only at the app bar.
+    Finder inAppBar(String text) =>
+        find.descendant(of: find.byType(AppBar), matching: find.text(text));
+
+    testWidgets('the header carries the BS period over the AD one', (
+      tester,
+    ) async {
+      await tester.pumpPage(subject());
+
+      final now = DateTime.now();
+      final bsLabel = CalendarPeriodLabel.bs(CalendarViewType.month, now);
+      final adLabel = CalendarPeriodLabel.of(CalendarViewType.month, now);
+
+      expect(inAppBar(bsLabel!), findsOneWidget);
+      expect(inAppBar(adLabel), findsOneWidget);
+    });
+
+    testWidgets('both header lines move together between months', (
+      tester,
+    ) async {
+      await tester.pumpPage(subject());
+
+      final cubit = tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>();
+      final next = DateTime(2026, 12, 15);
+      cubit.selectDate(next);
+      await tester.pumpAndSettle();
+
+      // Both readings are derived from the one focused date, so the BS header
+      // has to follow the AD one rather than lag a month behind.
+      expect(
+        inAppBar(CalendarPeriodLabel.bs(CalendarViewType.month, next)!),
+        findsOneWidget,
+      );
+      expect(
+        inAppBar(CalendarPeriodLabel.of(CalendarViewType.month, next)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no strip is shown until a day is picked', (tester) async {
+      await tester.pumpPage(subject());
+
+      expect(find.byType(DualDateStrip), findsNothing);
+    });
+
+    testWidgets('picking a day names it in both calendars', (tester) async {
+      await tester.pumpPage(subject());
+
+      tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>()
+          .selectDate(DateTime(2026, 9, 9));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DualDateStrip), findsOneWidget);
+      expect(find.text('भाद्र २४, २०८३'), findsOneWidget);
+      expect(find.text('September 9, 2026'), findsOneWidget);
+    });
+
+    testWidgets('the strip follows the selection', (tester) async {
+      await tester.pumpPage(subject());
+
+      final cubit = tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>();
+
+      cubit.selectDate(DateTime(2026, 9, 9));
+      await tester.pumpAndSettle();
+      expect(find.text('भाद्र २४, २०८३'), findsOneWidget);
+
+      cubit.selectDate(DateTime(2026, 10, 3));
+      await tester.pumpAndSettle();
+      expect(find.text('भाद्र २४, २०८३'), findsNothing);
+      expect(find.text('आश्विन १७, २०८३'), findsOneWidget);
+      expect(find.text('October 3, 2026'), findsOneWidget);
+    });
+
+    testWidgets('the events still reach the calendar with the strip up', (
+      tester,
+    ) async {
+      await tester.pumpPage(subject());
+
+      tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>()
+          .selectDate(DateTime(2026, 9, 9));
+      await tester.pumpAndSettle();
+
+      final source = calendarOf(tester).dataSource!;
+      expect(source.appointments, hasLength(1));
+      expect((source.appointments!.single as Appointment).subject, 'Standup');
+    });
+
+    testWidgets('Today returns to the real date in both calendars', (
+      tester,
+    ) async {
+      await tester.pumpPage(subject());
+
+      final cubit = tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>();
+      cubit.selectDate(DateTime(2026, 12, 15));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Go to today'));
+      await tester.pumpAndSettle();
+
+      final today = DateTime.now();
+      expect(
+        inAppBar(CalendarPeriodLabel.bs(CalendarViewType.month, today)!),
+        findsOneWidget,
+      );
+      expect(find.byType(DualDateStrip), findsOneWidget);
+    });
+
+    testWidgets('Today moves the calendar\'s own selection with it', (
+      tester,
+    ) async {
+      await tester.pumpPage(subject());
+
+      // Pick a day well away from today, then come back.
+      tester
+          .element(find.byType(SfCalendar))
+          .read<CalendarCubit>()
+          .selectDate(DateTime(2026, 12, 15));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Go to today'));
+      await tester.pumpAndSettle();
+
+      // Otherwise the outline stays on 15 December while the header and strip
+      // read today, and a view switch opens on December.
+      final controller = calendarOf(tester).controller!;
+      final today = DateTime.now();
+      expect(controller.selectedDate!.year, today.year);
+      expect(controller.selectedDate!.month, today.month);
+      expect(controller.selectedDate!.day, today.day);
     });
   });
 }

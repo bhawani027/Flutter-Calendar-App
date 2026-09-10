@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../app/theme/app_theme.dart';
 import '../../../../core/extensions/date_time_extensions.dart';
 import '../../../../core/presentation/error_snack_bar.dart';
 import '../../domain/entities/calendar_event.dart';
@@ -12,6 +13,7 @@ import '../cubit/calendar_cubit.dart';
 import '../widgets/calendar_month_cell.dart';
 import '../widgets/calendar_period_label.dart';
 import '../widgets/calendar_view_menu.dart';
+import '../widgets/dual_date_strip.dart';
 import '../widgets/event_calendar_data_source.dart';
 import '../widgets/event_details_sheet.dart';
 
@@ -122,6 +124,12 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void _goTo(DateTime date) {
     _controller.displayDate = date;
+    // The calendar keeps its own selection, and it drives both the cell
+    // outline and the period a view switch opens on. Left behind, Today would
+    // move the header and the dual-date strip while the outline stayed on the
+    // previously tapped day, and switching to the week view would land on that
+    // day's week rather than this one.
+    _controller.selectedDate = date;
     context.read<CalendarCubit>().selectDate(date);
   }
 
@@ -213,7 +221,8 @@ class _CalendarPageState extends State<CalendarPage> {
             titleSpacing: 0,
             centerTitle: false,
             title: _PeriodTitle(
-              label: CalendarPeriodLabel.of(state.view, state.focusedDate),
+              bsLabel: CalendarPeriodLabel.bs(state.view, state.focusedDate),
+              adLabel: CalendarPeriodLabel.of(state.view, state.focusedDate),
               onTap: () => _pickDate(state.focusedDate),
             ),
             actions: [
@@ -231,7 +240,15 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           body: state.isBusy
               ? const Center(child: CircularProgressIndicator())
-              : _buildCalendar(state),
+              : Column(
+                  children: [
+                    // Named in full only once a day is chosen; until then the
+                    // header already says which period is on screen.
+                    if (state.selectedDate != null)
+                      DualDateStrip(date: state.selectedDate!),
+                    Expanded(child: _buildCalendar(state)),
+                  ],
+                ),
           floatingActionButton: FloatingActionButton(
             tooltip: 'New event',
             onPressed: () => _openEditor(
@@ -338,26 +355,59 @@ class _CalendarPageState extends State<CalendarPage> {
 }
 
 class _PeriodTitle extends StatelessWidget {
-  const _PeriodTitle({required this.label, required this.onTap});
+  const _PeriodTitle({
+    required this.bsLabel,
+    required this.adLabel,
+    required this.onTap,
+  });
 
-  final String label;
+  /// The period in Bikram Sambat, or null for a period outside the BS table.
+  final String? bsLabel;
+
+  final String adLabel;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // BS leads, as it does in Hamro Patro, with the Gregorian
+                  // period underneath it.
+                  if (bsLabel != null)
+                    Text(
+                      bsLabel!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.nepali(
+                        theme.textTheme.titleMedium,
+                      ).copyWith(height: 1.15),
+                    ),
+                  Text(
+                    adLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: bsLabel == null
+                        ? theme.textTheme.titleLarge
+                        : theme.textTheme.labelMedium?.copyWith(
+                            color: theme.appBarTheme.foregroundColor
+                                ?.withValues(alpha: 0.75),
+                            height: 1.15,
+                          ),
+                  ),
+                ],
               ),
             ),
             const Icon(Icons.arrow_drop_down),

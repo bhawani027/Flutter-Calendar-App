@@ -4,6 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 abstract final class AppTheme {
+  /// [base] rendered in a Devanagari-capable face, for Bikram Sambat text.
+  ///
+  /// The app's body font, ABeeZee, carries no Devanagari glyphs, so Nepali
+  /// script would otherwise land on whatever each platform happens to fall back
+  /// to — and on the ones with no Devanagari font at all, on empty boxes.
+  /// Naming the face keeps the BS dates looking the same everywhere.
+  static TextStyle nepali(TextStyle? base) =>
+      GoogleFonts.notoSansDevanagari(textStyle: base);
+
   static ThemeData light() {
     final colorScheme = ColorScheme.fromSeed(seedColor: AppColors.seed);
     return ThemeData(
